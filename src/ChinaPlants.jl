@@ -2,7 +2,7 @@
 
 module ChinaPlants
 
-export getdbpath, gettreepath, initialize
+export getdbpath, gettreepath, initialize, checkspell
 
 using DataDeps
 using SymSpellChecker
@@ -93,12 +93,62 @@ function initialize()
 	codes = col("name_code")
 	global code2row = Dict(codes .=> eachindex(codes))
 	col("accepted_name_code")[col("name_code") .== "T20171000078632"] .= 
-		"T20211000001316" # special patch for v1.043 (2023)
+		"T20211000001316" # specific patch for v1.043 (2023)
 	simplify!(table, headers)
 	arows = sort!(getindex.((code2row,), unique(col("accepted_name_code"))))
 	@assert findall(col("name_code") .== col("accepted_name_code")) == arows
 	global name2row = getname2row(table, headers)
 	@assert issubset(arows, values(name2row))
+	global ssc = SymSpell(; max_dictionary_edit_distance=3)
+	for name = keys(name2row)
+		push!(ssc, name)
+	end
+	set_options!(ssc; verbosity=SymSpellChecker.VerbosityCLOSEST)
+	return nothing
+end
+
+function checkspell(name::AbstractString; 
+		showlog=true, forceaccept=true, symspell=true)
+	col(str) = view(table, :, headers[str])
+	if symspell
+		candidates = ssc[name]
+		showlog && @info("candidates: $(join(candidates, ", "))")
+		if isempty(candidates)
+			throw(KeyError(name))
+		end
+		name = first(candidates)
+		showlog && @info("candidate $name applied")
+	end
+	if forceaccept
+		if ! haskey(name2row, name)
+			throw(KeyError(name))
+		end
+		row = code2row[col("accepted_name_code")[name2row[name]]]
+		name = col("canonical_name")[row]
+	end
+	return name
+end
+
+function checkspell!(namevec::AbstractVector{<:AbstractString}; 
+		showlog=true, forceaccept=true, symspell=true)
+	unmatched = falses(length(namevec))
+	for i = eachindex(namevec)
+		try
+			namevec[i] = checkspell(namevec[i]; 
+				showlog=false, forceaccept=forceaccept, symspell=symspell)
+		catch KeyError
+			unmatched[i] = true
+		end
+	end
+	showlog && 
+		@info("unmatched items include $(join(findall(unmatched), ","))")
+	return namevec
+end
+
+function checkspell(namevec::AbstractVector{<:AbstractString}; 
+		showlog=true, forceaccept=true, symspell=true)
+	return checkspell!(deepcopy(namevec); 
+		showlog=showlog, forceaccept=forceaccept, symspell=symspell)
 end
 
 end # module ChinaPlants
