@@ -2,14 +2,20 @@
 
 module ChinaPlants
 
-export getdbpath, gettreepath, getiucnpath, initialize, checkspell
+export getdbpath, gettreepath, initialize, checkspell
 
 using DataDeps
+using FileIO
+using PyCall
+using Scratch
 using SymSpellChecker
 using XLSX
 
+include("iucn.jl")
+
 function __init__()
 	ENV["DATADEPS_ALWAYS_ACCEPT"] = true
+	global iucndir = @get_scratch!("iucndir")
 end
 
 function plantplus(guid)
@@ -42,21 +48,6 @@ function gettreepath()
 		@datadep_str name
 	end
 	return joinpath(path, "time_tree_13_663sp.tre")
-end
-
-function getiucnpath()
-	remote_path = "https://www.mee.gov.cn/xxgk2018/xxgk/xxgk01/" * 
-		"202305/W020230522536560832337.pdf"
-	name = "ChinaPlants_IUCN"
-	hash = "112362ecd0157684ba41d7ed3bc1e9e7d02628b1f2d48e581796b54062354f5c"
-	path = try
-		@datadep_str name
-	catch
-		register(DataDep(name, 
-			"IUCN Red List of plant species in China", remote_path, hash))
-		@datadep_str name
-	end
-	return joinpath(path, "W020230522536560832337.pdf")
 end
 
 function simplify!(table, headers)
