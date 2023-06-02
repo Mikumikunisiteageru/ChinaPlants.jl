@@ -22,7 +22,7 @@ jobs:
         arch:
           - x64
     steps:
-      - name: Install matplotlib
+      - name: Install pypdf
         run: if [ "$RUNNER_OS" = "Linux" ]; then sudo pip install pypdf; fi
         shell: bash
       - uses: actions/checkout@v2
