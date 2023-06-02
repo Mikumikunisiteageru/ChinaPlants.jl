@@ -6,6 +6,7 @@ export getdbpath, gettreepath, initialize, checkspell
 
 using DataDeps
 using FileIO
+using JLD2
 using PyCall
 using Scratch
 using SymSpellChecker
