@@ -1,7 +1,17 @@
 # test/runtests.jl
 
+using Aqua
 using ChinaPlants
 using Test
+
+# Aqua.test_ambiguities([ChinaPlants, Base, Core])
+Aqua.test_unbound_args(ChinaPlants)
+Aqua.test_undefined_exports(ChinaPlants)
+Aqua.test_piracy(ChinaPlants)
+Aqua.test_project_extras(ChinaPlants)
+Aqua.test_stale_deps(ChinaPlants)
+Aqua.test_deps_compat(ChinaPlants)
+Aqua.test_project_toml_formatting(ChinaPlants)
 
 const CP = ChinaPlants
 

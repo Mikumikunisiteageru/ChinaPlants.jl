@@ -12,8 +12,21 @@ Scratch = "6c6a2e73-6563-6170-7368-637461726353"
 SymSpellChecker = "bb1b64e9-0ccc-445c-80cb-5313b9f7dfe1"
 XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
 
+[compat]
+Aqua = "0.6, 0.7"
+DataDeps = "0.7"
+FileIO = "1.16"
+JLD2 = "0.4"
+PyCall = "1"
+Scratch = "1"
+SymSpellChecker = "0.1.1"
+Test = "1"
+XLSX = "0.9, 0.10"
+julia = "1"
+
 [extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Aqua", "Test"]
