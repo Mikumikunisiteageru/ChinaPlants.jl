@@ -2,7 +2,7 @@
 
 export getiucnpath, iucninit, IUCNItem, checkiucn
 
-iucndir = ""
+iucndir = @get_scratch!("iucndir")
 iucndict = Dict()
 
 function getiucnpath()
