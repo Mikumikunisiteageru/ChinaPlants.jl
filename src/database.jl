@@ -1,5 +1,19 @@
 # src/database.jl
 
+function getdbpath()
+	remote_path = plantplus("e35f34dd-a2c1-4c00-9382-142020a6e04f")
+	name = "ChinaPlants"
+	hash = "d26f17c38478d8a8d43de71fecfff9e1b2db50b838e6d29262a59e1bd1f22a77"
+	path = try
+		@datadep_str name
+	catch
+		register(DataDep(name, 
+			"Checklist of plant species in China", remote_path, hash))
+		@datadep_str name
+	end
+	return joinpath(path, "Sp2000cn-2023 植物完整版含简表 v1.043.xlsx")
+end
+
 dbpath = @get_scratch!("database")
 dbscratch(file::AbstractString) = joinpath(dbpath, file)
 
@@ -102,6 +116,22 @@ function cpprops()
 	return global props = 
 		isfile(propspath) ? load_object(propspath) : initialize().props
 end
+
+function getprop(name::AbstractString, prop::AbstractString; 
+		showlog=false, spellchecks=false)
+	props = cpprops()
+	col(str) = view(props.table, :, props.headers[str])
+	spellchecks && (name = checkspell(name; showlog=showlog))
+	accode = cpaccode(name)
+	return col(prop)[props.code2row[accode]]
+end
+getkingdom(name::AbstractString; kwargs...) = 
+	getprop(name, "kingdom"; kwargs...)
+getphylum(name::AbstractString; kwargs...) = getprop(name, "phylum"; kwargs...)
+getclass(name::AbstractString; kwargs...) = getprop(name, "class"; kwargs...)
+getorder(name::AbstractString; kwargs...) = getprop(name, "order"; kwargs...)
+getfamily(name::AbstractString; kwargs...) = getprop(name, "family"; kwargs...)
+getgenus(name::AbstractString; kwargs...) = getprop(name, "genus"; kwargs...)
 
 function cpssc()
 	(@isdefined ssc) && return ssc

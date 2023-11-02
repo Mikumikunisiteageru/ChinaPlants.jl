@@ -13,4 +13,3 @@ function gettreepath()
 	end
 	return joinpath(path, "time_tree_13_663sp.tre")
 end
-

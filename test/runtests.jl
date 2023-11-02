@@ -14,6 +14,13 @@ const CP = ChinaPlants
 	@test standardize("Allium kepa"; showlog=false) == "Allium cepa"
 	@test standardize("Allium tui"; showlog=false) == "Allium cyaneum"
 	@test standardize("Allium wallichii"; showlog=false) == "Allium wallichii"
+	@test getkingdom("Milula spicata") == "Plantae"
+	@test getphylum("Milula spicata") == "Tracheophyta"
+	@test getclass("Milula spicata") == "Magnoliopsida"
+	@test getorder("Milula spicata") == "Asparagales"
+	@test getfamily("Milula spicata") == "Amaryllidaceae"
+	@test getgenus("Milula spicata") == "Allium"
+	@test getprop("Milula spicata", "author") == "(Prain) N. Friesen"
 end
 
 @testset "tree" begin
