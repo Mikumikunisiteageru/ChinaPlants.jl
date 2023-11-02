@@ -2,7 +2,7 @@
 
 module ChinaPlants
 
-export getdbpath, gettreepath, checkspell
+export getdbpath, gettreepath, checkspell, forceaccept, standardize
 
 using DataDeps
 using FileIO
@@ -131,35 +131,48 @@ function cpssc()
 	return ssc
 end
 
-function checkspell(name::AbstractString; 
-		showlog=true, forceaccept=true, symspell=true)
+function checkspell(rawname::AbstractString; showlog=true)
+	candidates = cpssc()[rawname]
+	showlog && @info("candidates: $(join(candidates, ", "))")
+	isempty(candidates) && throw(KeyError(rawname))
+	okname = first(candidates)
+	showlog && @info("candidate $okname applied")
+	return okname
+end
+
+function cpcode(name::AbstractString)
 	data = cpdata()
 	col(str) = view(data.table, :, data.headers[str])
-	if symspell
-		candidates = cpssc()[name]
-		showlog && @info("candidates: $(join(candidates, ", "))")
-		if isempty(candidates)
-			throw(KeyError(name))
-		end
-		name = first(candidates)
-		showlog && @info("candidate $name applied")
-	end
-	if forceaccept
-		if ! haskey(data.name2row, name)
-			throw(KeyError(name))
-		end
-		row = data.code2row[col("accepted_name_code")[data.name2row[name]]]
-		name = col("canonical_name")[row]
-	end
+	return col("name_code")[data.name2row[name]]
+end
+
+function cpaccode(synonym::AbstractString)
+	data = cpdata()
+	col(str) = view(data.table, :, data.headers[str])
+	return col("accepted_name_code")[data.name2row[synonym]]
+end
+
+function forceaccept(synonym::AbstractString)
+	data = cpdata()
+	col(str) = view(data.table, :, data.headers[str])
+	accode = cpaccode(synonym)
+	row = data.code2row[accode]
+	return col("canonical_name")[row]
+end
+
+function standardize(name::AbstractString; 
+		showlog=true, spellchecks=true, acceptforces=true)
+	spellchecks && (name = checkspell(name; showlog=showlog))
+	acceptforces && (name = forceaccept(name))
 	return name
 end
 
-function checkspell!(namevec::AbstractVector{<:AbstractString}; 
+function standardize!(namevec::AbstractVector{<:AbstractString}; 
 		showlog=true, forceaccept=true, symspell=true)
 	unmatched = falses(length(namevec))
 	for i = eachindex(namevec)
 		try
-			namevec[i] = checkspell(namevec[i]; 
+			namevec[i] = standardize(namevec[i]; 
 				showlog=false, forceaccept=forceaccept, symspell=symspell)
 		catch KeyError
 			unmatched[i] = true
@@ -170,9 +183,9 @@ function checkspell!(namevec::AbstractVector{<:AbstractString};
 	return namevec
 end
 
-function checkspell(namevec::AbstractVector{<:AbstractString}; 
+function standardize(namevec::AbstractVector{<:AbstractString}; 
 		showlog=true, forceaccept=true, symspell=true)
-	return checkspell!(deepcopy(namevec); 
+	return standardize!(deepcopy(namevec); 
 		showlog=showlog, forceaccept=forceaccept, symspell=symspell)
 end
 
