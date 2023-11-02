@@ -5,14 +5,14 @@ dbscratch(file::AbstractString) = joinpath(dbpath, file)
 
 function simplify!(table, headers)
 	codes = view(table, :, headers["name_code"])
-	acodes = view(table, :, headers["accepted_name_code"])
+	accodes = view(table, :, headers["accepted_name_code"])
 	@assert allunique(codes)
-	@assert issubset(acodes, codes)
+	@assert issubset(accodes, codes)
 	acodeufs = Dict{String, String}()
 	for code = codes
 		acodeufs[code] = code
 	end
-	for (code, acode) = zip(codes, acodes)
+	for (code, acode) = zip(codes, accodes)
 		acodeufs[code] = acode
 	end
 	function findroot(acodeufs, code)
@@ -23,7 +23,7 @@ function simplify!(table, headers)
 		return acode
 	end
 	for i = eachindex(codes)
-		acodes[i] = findroot(acodeufs, codes[i])
+		accodes[i] = findroot(acodeufs, codes[i])
 	end
 	return table
 end
@@ -43,12 +43,14 @@ function getname2row(table, headers, code2row)
 	return name2row
 end
 
-function cpdata()
-	(@isdefined data) && return data
-	path = dbscratch("data.jld2")
-	isfile(path) && return global data = load_object(path)
-	@info("Initializing... May take up to one minute...")
-	xlsx = XLSX.readxlsx(getdbpath())
+struct Table
+	headers
+	table
+	code2row
+	name2row
+end
+
+function buildsyns(xlsx)
 	sheet = xlsx["scientific_names"][:]
 	headers = Dict(sheet[1, :] .=> axes(sheet, 2))
 	table = sheet[2:end, :]
@@ -62,18 +64,51 @@ function cpdata()
 	@assert findall(col("name_code") .== col("accepted_name_code")) == arows
 	name2row = getname2row(table, headers, code2row)
 	@assert issubset(arows, values(name2row))
-	global data = (headers=headers, table=table, 
-		code2row=code2row, name2row=name2row)
-	save_object(path, data)
-	return data
+	return Table(headers, table, code2row, name2row)
+end
+
+function buildprops(xlsx)
+	sheet = xlsx["scientific_names-物种接受名简表"][:]
+	headers = Dict(sheet[1, :] .=> axes(sheet, 2))
+	table = sheet[2:end, :]
+	col(str) = view(table, :, headers[str])
+	codes = col("name_code")
+	code2row = Dict(codes .=> eachindex(codes))
+	names = col("canonical_name")
+	name2row = Dict(names .=> eachindex(names))
+	return Table(headers, table, code2row, name2row)
+end
+
+function initialize()
+	@info("Initializing... May take up to one minute...")
+	xlsx = XLSX.readxlsx(getdbpath())
+	syns = buildsyns(xlsx)
+	props = buildprops(xlsx)
+	save_object(dbscratch("syns.jld2"), syns)
+	save_object(dbscratch("props.jld2"), props)
+	return (syns=syns, props=props)
+end
+
+function cpsyns()
+	(@isdefined syns) && return syns
+	synspath = dbscratch("syns.jld2")
+	return global syns = 
+		isfile(synspath) ? load_object(synspath) : initialize().syns
+end
+
+function cpprops()
+	(@isdefined props) && return props
+	propspath = dbscratch("props.jld2")
+	return global props = 
+		isfile(propspath) ? load_object(propspath) : initialize().props
 end
 
 function cpssc()
 	(@isdefined ssc) && return ssc
-	data = cpdata()
+	syns = cpsyns()
 	@info("Indexing names... May take several seconds...")
 	global ssc = SymSpell(; max_dictionary_edit_distance=3)
-	for name = keys(data.name2row)
+	for name = keys(syns.name2row)
 		push!(ssc, name)
 	end
 	set_options!(ssc; verbosity=SymSpellChecker.VerbosityCLOSEST)
@@ -90,22 +125,22 @@ function checkspell(rawname::AbstractString; showlog=true)
 end
 
 function cpcode(name::AbstractString)
-	data = cpdata()
-	col(str) = view(data.table, :, data.headers[str])
-	return col("name_code")[data.name2row[name]]
+	syns = cpsyns()
+	col(str) = view(syns.table, :, syns.headers[str])
+	return col("name_code")[syns.name2row[name]]
 end
 
 function cpaccode(synonym::AbstractString)
-	data = cpdata()
-	col(str) = view(data.table, :, data.headers[str])
-	return col("accepted_name_code")[data.name2row[synonym]]
+	syns = cpsyns()
+	col(str) = view(syns.table, :, syns.headers[str])
+	return col("accepted_name_code")[syns.name2row[synonym]]
 end
 
 function forceaccept(synonym::AbstractString)
-	data = cpdata()
-	col(str) = view(data.table, :, data.headers[str])
+	syns = cpsyns()
+	col(str) = view(syns.table, :, syns.headers[str])
 	accode = cpaccode(synonym)
-	row = data.code2row[accode]
+	row = syns.code2row[accode]
 	return col("canonical_name")[row]
 end
 
