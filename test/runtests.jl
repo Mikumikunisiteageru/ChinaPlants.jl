@@ -3,8 +3,13 @@
 using ChinaPlants
 using Test
 
-@test isempty(ChinaPlants.iucndict)
+@testset "iucn" begin
+	@test isempty(ChinaPlants.iucndict)
+	@test nothing === iucninit()
+	@test length(ChinaPlants.iucndict) == 39320		
+end
 
-@test nothing === iucninit()
-
-@test length(ChinaPlants.iucndict) == 39320
+@testset "checkspell" begin
+	@test checkspell("Allium kepa") == "Allium cepa"
+	@test checkspell("Allium tui") == "Allium cyaneum"
+end

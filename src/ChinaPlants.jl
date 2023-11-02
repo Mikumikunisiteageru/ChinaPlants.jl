@@ -2,7 +2,7 @@
 
 module ChinaPlants
 
-export getdbpath, gettreepath, initialize, checkspell
+export getdbpath, gettreepath, checkspell
 
 using DataDeps
 using FileIO
@@ -18,6 +18,9 @@ function __init__()
 	ENV["DATADEPS_ALWAYS_ACCEPT"] = true
 	global iucndir = @get_scratch!("iucndir")
 end
+
+scratchpath = @get_scratch!("chinaplants")
+scratch(file::AbstractString) = joinpath(scratchpath, file)
 
 function plantplus(guid)
 	return "https://www.plantplus.cn/cn/datasetdatadown?guid=$guid"
@@ -76,7 +79,7 @@ function simplify!(table, headers)
 	return table
 end
 
-function getname2row(table, headers)
+function getname2row(table, headers, code2row)
 	col(str) = view(table, :, headers[str])
 	nrow = size(table, 1)
 	rels = zeros(nrow)
@@ -91,34 +94,49 @@ function getname2row(table, headers)
 	return name2row
 end
 
-function initialize()
+function cpdata()
+	(@isdefined data) && return data
+	path = scratch("data.jld2")
+	isfile(path) && return global data = load_object(path)
+	@info("Initializing... May take up to one minute...")
 	xlsx = XLSX.readxlsx(getdbpath())
 	sheet = xlsx["scientific_names"][:]
-	global headers = Dict(sheet[1, :] .=> axes(sheet, 2))
-	global table = sheet[2:end, :]
+	headers = Dict(sheet[1, :] .=> axes(sheet, 2))
+	table = sheet[2:end, :]
 	col(str) = view(table, :, headers[str])
 	codes = col("name_code")
-	global code2row = Dict(codes .=> eachindex(codes))
+	code2row = Dict(codes .=> eachindex(codes))
 	col("accepted_name_code")[col("name_code") .== "T20171000078632"] .= 
 		"T20211000001316" # specific patch for v1.043 (2023)
 	simplify!(table, headers)
 	arows = sort!(getindex.((code2row,), unique(col("accepted_name_code"))))
 	@assert findall(col("name_code") .== col("accepted_name_code")) == arows
-	global name2row = getname2row(table, headers)
+	name2row = getname2row(table, headers, code2row)
 	@assert issubset(arows, values(name2row))
+	global data = (headers=headers, table=table, 
+		code2row=code2row, name2row=name2row)
+	save_object(path, data)
+	return data
+end
+
+function cpssc()
+	(@isdefined ssc) && return ssc
+	data = cpdata()
+	@info("Indexing names... May take several seconds...")
 	global ssc = SymSpell(; max_dictionary_edit_distance=3)
-	for name = keys(name2row)
+	for name = keys(data.name2row)
 		push!(ssc, name)
 	end
 	set_options!(ssc; verbosity=SymSpellChecker.VerbosityCLOSEST)
-	return nothing
+	return ssc
 end
 
 function checkspell(name::AbstractString; 
 		showlog=true, forceaccept=true, symspell=true)
-	col(str) = view(table, :, headers[str])
+	data = cpdata()
+	col(str) = view(data.table, :, data.headers[str])
 	if symspell
-		candidates = ssc[name]
+		candidates = cpssc()[name]
 		showlog && @info("candidates: $(join(candidates, ", "))")
 		if isempty(candidates)
 			throw(KeyError(name))
@@ -127,10 +145,10 @@ function checkspell(name::AbstractString;
 		showlog && @info("candidate $name applied")
 	end
 	if forceaccept
-		if ! haskey(name2row, name)
+		if ! haskey(data.name2row, name)
 			throw(KeyError(name))
 		end
-		row = code2row[col("accepted_name_code")[name2row[name]]]
+		row = data.code2row[col("accepted_name_code")[data.name2row[name]]]
 		name = col("canonical_name")[row]
 	end
 	return name
