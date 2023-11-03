@@ -30,6 +30,7 @@ const CP = ChinaPlants
 	@test getorder("Milula spicata") == "Asparagales"
 	@test getfamily("Milula spicata") == "Amaryllidaceae"
 	@test getgenus("Milula spicata") == "Allium"
+	@test getlitgenus("Milula spicata") == "Milula"
 	@test getprop("Milula spicata", "author") == "(Prain) N. Friesen"
 end
 

@@ -4,6 +4,7 @@ module ChinaPlants
 
 export getdbpath, checkspell, forceaccept, standardize, standardize!
 export getprop, getkingdom, getphylum, getclass, getorder, getfamily, getgenus
+export getlitgenus
 export gettreepath
 export iucninit
 

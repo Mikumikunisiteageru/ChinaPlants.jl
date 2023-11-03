@@ -132,6 +132,7 @@ getclass(name::AbstractString; kwargs...) = getprop(name, "class"; kwargs...)
 getorder(name::AbstractString; kwargs...) = getprop(name, "order"; kwargs...)
 getfamily(name::AbstractString; kwargs...) = getprop(name, "family"; kwargs...)
 getgenus(name::AbstractString; kwargs...) = getprop(name, "genus"; kwargs...)
+getlitgenus(name::AbstractString) = first(split(name, ' '))
 
 function cpssc()
 	(@isdefined ssc) && return ssc
