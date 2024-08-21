@@ -12,17 +12,17 @@ Currently data sources include the following three.
 
 ### Taxonomy
 
-[*Checklist of plant species in China* (*2023 Edition*) / 中国植物物种名录（2023版）](https://www.plantplus.cn/doi/10.12282/plantdata.1390)
+[*Checklist of plant species in China* (*2024 Edition*) / 中国植物物种名录（2024版）](https://www.plantplus.cn/doi/10.12282/plantdata.1476)
 
 Cite this part as:
 ```bibtex
-@database{Checklist2023,
+@database{Checklist2024,
 	author = {{Institute of Botany, Chinese Academy of Sciences}},
-	title = {Checklist of plant species in {China} (2023 edition)},
+	title = {Checklist of plant species in {China} (2024 edition)},
 	publisher = {Plant Data Center of Chinese Academy of Sciences},
-	year = {2023},
-	doi = {10.12282/plantdata.1390},
-	url = {https://www.plantplus.cn/doi/10.12282/plantdata.1390},
+	year = {2024},
+	doi = {10.12282/plantdata.1476},
+	url = {https://www.plantplus.cn/doi/10.12282/plantdata.1476},
 }
 ```
 

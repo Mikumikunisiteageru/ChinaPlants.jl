@@ -1,9 +1,9 @@
 # src/database.jl
 
 function getdbpath()
-	remote_path = plantplus("e35f34dd-a2c1-4c00-9382-142020a6e04f")
-	name = "ChinaPlants"
-	hash = "d26f17c38478d8a8d43de71fecfff9e1b2db50b838e6d29262a59e1bd1f22a77"
+	remote_path = plantplus("96807ec2-4ddd-4228-9e4e-a19b7814b6f9")
+	name = "ChinaPlants_DB_2024.1.03"
+	hash = "d90bdf75250b7366caf923eddffa603428403767d1430a16fa9c9f8630630b4b"
 	path = try
 		@datadep_str name
 	catch
@@ -11,7 +11,7 @@ function getdbpath()
 			"Checklist of plant species in China", remote_path, hash))
 		@datadep_str name
 	end
-	return joinpath(path, "Sp2000cn-2023 植物完整版含简表 v1.043.xlsx")
+	return joinpath(path, "sp2000-2024_植物完整版V1.03.xlsx")
 end
 
 dbpath = @get_scratch!("database")
@@ -71,8 +71,6 @@ function buildsyns(xlsx)
 	col(str) = view(table, :, headers[str])
 	codes = col("name_code")
 	code2row = Dict(codes .=> eachindex(codes))
-	col("accepted_name_code")[col("name_code") .== "T20171000078632"] .= 
-		"T20211000001316" # specific patch for v1.043 (2023)
 	simplify!(table, headers)
 	arows = sort!(getindex.((code2row,), unique(col("accepted_name_code"))))
 	@assert findall(col("name_code") .== col("accepted_name_code")) == arows
@@ -82,7 +80,7 @@ function buildsyns(xlsx)
 end
 
 function buildprops(xlsx)
-	sheet = xlsx["scientific_names-物种接受名简表"][:]
+	sheet = xlsx["scientific_names"][:]
 	headers = Dict(sheet[1, :] .=> axes(sheet, 2))
 	table = sheet[2:end, :]
 	col(str) = view(table, :, headers[str])
@@ -127,10 +125,10 @@ function getprop(name::AbstractString, prop::AbstractString;
 end
 getkingdom(name::AbstractString; kwargs...) = 
 	getprop(name, "kingdom"; kwargs...)
-getphylum(name::AbstractString; kwargs...) = getprop(name, "phylum"; kwargs...)
-getclass(name::AbstractString; kwargs...) = getprop(name, "class"; kwargs...)
+getphylum(name::AbstractString; kwargs...) = getprop(name, "Phylum"; kwargs...)
+getclass(name::AbstractString; kwargs...) = getprop(name, "Class"; kwargs...)
 getorder(name::AbstractString; kwargs...) = getprop(name, "order"; kwargs...)
-getfamily(name::AbstractString; kwargs...) = getprop(name, "family"; kwargs...)
+getfamily(name::AbstractString; kwargs...) = getprop(name, "Family"; kwargs...)
 getgenus(name::AbstractString; kwargs...) = getprop(name, "genus"; kwargs...)
 getlitgenus(name::AbstractString) = first(split(name, ' '))
 

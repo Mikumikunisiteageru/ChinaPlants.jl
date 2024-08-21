@@ -1,7 +1,7 @@
 name = "ChinaPlants"
 uuid = "a02396f6-d198-464b-82a1-29b757a02ed6"
 authors = ["Yu-Chang YANG <yang.yc.allium@gmail.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 DataDeps = "124859b0-ceae-595e-8997-d05f6a7a8dfe"
