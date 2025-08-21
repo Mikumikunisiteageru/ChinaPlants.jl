@@ -1,9 +1,9 @@
 # src/database.jl
 
 function getdbpath()
-	remote_path = plantplus("96807ec2-4ddd-4228-9e4e-a19b7814b6f9")
-	name = "ChinaPlants_DB_2024.1.03"
-	hash = "d90bdf75250b7366caf923eddffa603428403767d1430a16fa9c9f8630630b4b"
+	remote_path = plantplus("a79f9533-7918-4ee5-b1c2-86182b411547")
+	name = "ChinaPlants_DB_2025.1.01"
+	hash = "4000597969ca5c5b29a2861725f548d3058c490ee7a27fbb8d70a72a5ece9388"
 	path = try
 		@datadep_str name
 	catch
@@ -11,7 +11,7 @@ function getdbpath()
 			"Checklist of plant species in China", remote_path, hash))
 		@datadep_str name
 	end
-	return joinpath(path, "sp2000-2024_植物完整版V1.03.xlsx")
+	return joinpath(path, "cn-sp2000-2025_植物完整版V1.01.xlsx")
 end
 
 dbpath = @get_scratch!("database")

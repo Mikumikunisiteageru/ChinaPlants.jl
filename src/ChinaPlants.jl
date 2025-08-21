@@ -21,7 +21,7 @@ function __init__()
 end
 
 function plantplus(guid)
-	return "https://www.plantplus.cn/cn/datasetdatadown?guid=$guid"
+	return "http://www.plantplus.cn/cn/datasetdatadown?guid=$guid"
 end
 
 include("database.jl")
